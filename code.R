@@ -14,4 +14,18 @@ classroom6 %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
 
+classroom6 %>%
+  group_by(minority) %>%
+  summarize(Mean = mean(mathgain),
+            SD = sd(mathgain))
+
+classroom6 %>%
+  group_by(sex, minority) %>%
+  summarize(Mean = mean(mathgain),
+            SD = sd(mathgain))
+
+classroom6 %>%
+  group_by(classid) %>%
+  summarize(Mean = mean(mathgain),
+            SD = sd(mathgain))
 # TODO: More of these for level 1, then for level 2
