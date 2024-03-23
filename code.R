@@ -9,23 +9,32 @@ load("classroom6.RData")
 summary(classroom6)
 
 # a.
+
+# Level 1 fixed factors
 classroom6 %>%
   group_by(sex) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
+# Difference in means and difference in SD by 3.5% and 9.7% respectively.
 
 classroom6 %>%
   group_by(minority) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
+# Difference in means 3.9%, difference in SD 4.3%.
 
+# Level 1 fixed factor interaction terms
 classroom6 %>%
   group_by(sex, minority) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
 
+# Level 1 covariate terms
 classroom6 %>%
-  group_by(classid) %>%
-  summarize(Mean = mean(mathgain),
-            SD = sd(mathgain))
-# TODO: More of these for level 1, then for level 2
+  group_by(sex, minority) %>%
+  summarize(CorYearsTaught = cor(yearstea, mathgain),
+            CorMathPrep = cor(mathprep, mathgain))
+# Note the different slopes for both yearstea and mathprep-- these should both
+# have split coefficients by sex and/or minority
+
+# TODO: More of these for level 1(?), then for level 2
