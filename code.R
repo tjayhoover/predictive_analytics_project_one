@@ -29,12 +29,14 @@ classroom6 %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
 
-# Level 1 covariate terms
+# Level 2 factors
 classroom6 %>%
   group_by(sex, minority) %>%
   summarize(CorYearsTaught = cor(yearstea, mathgain),
             CorMathPrep = cor(mathprep, mathgain))
-# Note the different slopes for both yearstea and mathprep-- these should both
-# have split coefficients by sex and/or minority
+# Note the different slopes for both yearstea, mathprep, and SES-- these should
+# all have split coefficients by sex and/or minority until later testing.
+
+# 
 
 # TODO: More of these for level 1(?), then for level 2
