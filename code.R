@@ -58,23 +58,12 @@ plot(mathgain ~ mathkind, data = classroom6)
 plot(mathgain ~ ses, data = classroom6)
 # Nothing good...
 
-
-#  TODO: add the rest from the Word doc.
-
 # Level 2 factors
 classroom6 %>%
-  group_by(sex, minority) %>%
-  summarize(CorYearsTaught = cor(yearstea, mathgain),
-            CorMathPrep = cor(mathprep, mathgain),
-            CorMathKind = cor(mathkind, mathgain),
-            CorSES = cor(ses, mathgain))
-# Note the different slopes for both yearstea, mathprep, mathkind, SES-- these
-# should all have split coefficients by sex and/or minority until later testing.
-
-# TODO: We should fit some minimal linear regression models using these and see
-# how the parameters change; looking at correlation doesn't tell us as much as
-# we'd hope.
-
+  group_by(yearstea, mathprep) %>%
+  summarize(Mean = mean(mathgain),
+            SD = sd(mathgain))
+# Conclusion: hard to read when unbinned, so apply binning.
 
 means_by_class = classroom6 %>%
   group_by(classid) %>%
@@ -83,14 +72,70 @@ plot(means ~ yearstea, data = means_by_class)
 plot(means ~ mathprep, data = means_by_class)
 # Conclusion: lvl 2 variables have variance, form bins and use as fixed factors.
 
+classroom6_lvl2bins = classroom6 %>%
+  mutate(yearstea_binned = cut(yearstea, breaks = 3, labels = c("Low", "Medium", "High")),
+         mathprep_binned = cut(mathprep, breaks = 3, labels = c("Low", "Medium", "High")))
+
+classroom6_lvl2bins %>%
+  group_by(yearstea_binned) %>%
+  summarize(Mean = mean(mathgain),
+            SD = sd(mathgain))
+bwplot(mathgain ~ yearstea_binned,
+       data = classroom6_lvl2bins,
+       aspect = 2,
+       ylab = "mathgain",
+       xlab = "mathprep",
+       main = "Boxplots of years taught against math gain"
+)
+# Conclusion: binned yearstea is significant. Variances are different, and there
+# are notable outliers in all groups.
+
+classroom6_lvl2bins %>%
+  group_by(mathprep_binned) %>%
+  summarize(Mean = mean(mathgain),
+            SD = sd(mathgain))
+bwplot(mathgain ~ mathprep_binned,
+       data = classroom6_lvl2bins,
+       aspect = 2,
+       ylab = "mathgain",
+       xlab = "mathprep",
+       main = "Boxplots of math prep against math gain"
+)
+# Conclusion: binned mathprep looks good. Extremely different variance. Mean is
+# different between low / medium and high groups; consider consolidating these
+# categories together.
+
+classroom6_lvl2bins %>%
+  group_by(mathprep_binned, yearstea_binned) %>%
+  summarize(Mean = mean(mathgain),
+            SD = sd(mathgain),
+            N = n())
+bwplot(mathgain ~ mathprep_binned | yearstea_binned,
+       data = classroom6_lvl2bins,
+       aspect = 2,
+       ylab = "mathgain",
+       xlab = "mathprep",
+       main = "Boxplots of math prep and years taught against math gain"
+)
+# Conclusion: This could be viable, but note how low the mean is for high
+# mathprep and high yearstea-- this is just a really small bin. There's also no
+# data for low years taught and high math prep. Combining some of these bins
+# would probably be beneficial. Not very strong.
+
+classroom6 %>%
+  group_by(sex, minority) %>%
+  summarize(CorYearsTaught = cor(yearstea, mathgain),
+            CorMathPrep = cor(mathprep, mathgain),
+            CorMathKind = cor(mathkind, mathgain),
+            CorSES = cor(ses, mathgain))
+# Conclusion: not much, the correlation actually isn't that descriptive.
+
 plot(means ~ classid, data = means_by_class)
-# Conclusion: bin classID as a random factor / or residual term
-# TODO: which one?
+# Conclusion: class means vary by class ID, include classid as a random factor.
+# First evidence of an outlier too-- class 37.
 
 plot(mathgain ~ childid, data = classroom6)
-# Conclusion: not much here, but a good candidate for residual structure.
-# Looks to have equal variance
-
+# Conclusion: nothing much here, but a good sign of constant variance.
 
 # Box and whisker plots
 
@@ -113,3 +158,5 @@ bwplot(
 # {
 #   boxplot(class.first8$mathgain[class.first8$schoolid == i] ~ class.first8$classid[class.first8$schoolid == i])
 # }
+
+
