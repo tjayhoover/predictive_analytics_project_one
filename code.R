@@ -72,16 +72,17 @@ plot(means ~ yearstea, data = means_by_class)
 plot(means ~ mathprep, data = means_by_class)
 # Conclusion: lvl 2 variables have variance, form bins and use as fixed factors.
 
-classroom6_lvl2bins = classroom6 %>%
+
+mutated_classroom6_data = classroom6 %>%
   mutate(yearstea_binned = cut(yearstea, breaks = 3, labels = c("Low", "Medium", "High")),
          mathprep_binned = cut(mathprep, breaks = 3, labels = c("Low", "Medium", "High")))
 
-classroom6_lvl2bins %>%
+mutated_classroom6_data %>%
   group_by(yearstea_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
 bwplot(mathgain ~ yearstea_binned,
-       data = classroom6_lvl2bins,
+       data = mutated_classroom6_data,
        aspect = 2,
        ylab = "mathgain",
        xlab = "mathprep",
@@ -90,12 +91,12 @@ bwplot(mathgain ~ yearstea_binned,
 # Conclusion: binned yearstea is significant. Variances are different, and there
 # are notable outliers in all groups.
 
-classroom6_lvl2bins %>%
+mutated_classroom6_data %>%
   group_by(mathprep_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
 bwplot(mathgain ~ mathprep_binned,
-       data = classroom6_lvl2bins,
+       data = mutated_classroom6_data,
        aspect = 2,
        ylab = "mathgain",
        xlab = "mathprep",
@@ -105,13 +106,13 @@ bwplot(mathgain ~ mathprep_binned,
 # different between low / medium and high groups; consider consolidating these
 # categories together.
 
-classroom6_lvl2bins %>%
+mutated_classroom6_data %>%
   group_by(mathprep_binned, yearstea_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain),
             N = n())
 bwplot(mathgain ~ mathprep_binned | yearstea_binned,
-       data = classroom6_lvl2bins,
+       data = mutated_classroom6_data,
        aspect = 2,
        ylab = "mathgain",
        xlab = "mathprep",
@@ -160,3 +161,17 @@ bwplot(
 # }
 
 
+# Convert text-labeled bins to numeric (ordinal) values
+mutated_classroom6_data$yearstea_binned_num <- as.numeric(mutated_classroom6_data$yearstea_binned)
+mutated_classroom6_data$mathprep_binned_num <- as.numeric(mutated_classroom6_data$mathprep_binned)
+
+
+
+
+# Initial Model (Full)
+
+summary(mutated_classroom6_data)
+
+model1.fit <- lme(mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned, random = ~1|classid, data = mutated_classroom6_data, method="REML")
+summary(model1.fit)
+anova(model1.fit)
