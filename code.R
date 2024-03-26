@@ -74,19 +74,30 @@ plot(means ~ mathprep, data = means_by_class)
 
 
 mutated_classroom6_data = classroom6 %>%
-  mutate(yearstea_binned = cut(yearstea, breaks = 3, labels = c("Low", "Medium", "High")),
-         mathprep_binned = cut(mathprep, breaks = 3, labels = c("Low", "Medium", "High")))
+  mutate(
+    yearstea_binned = cut(
+      yearstea,
+      breaks = 3,
+      labels = c("Low", "Medium", "High")
+    ),
+    mathprep_binned = cut(
+      mathprep,
+      breaks = 3,
+      labels = c("Low", "Medium", "High")
+    )
+  )
 
 mutated_classroom6_data %>%
   group_by(yearstea_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
-bwplot(mathgain ~ yearstea_binned,
-       data = mutated_classroom6_data,
-       aspect = 2,
-       ylab = "mathgain",
-       xlab = "mathprep",
-       main = "Boxplots of years taught against math gain"
+bwplot(
+  mathgain ~ yearstea_binned,
+  data = mutated_classroom6_data,
+  aspect = 2,
+  ylab = "mathgain",
+  xlab = "mathprep",
+  main = "Boxplots of years taught against math gain"
 )
 # Conclusion: binned yearstea is significant. Variances are different, and there
 # are notable outliers in all groups.
@@ -95,12 +106,13 @@ mutated_classroom6_data %>%
   group_by(mathprep_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
-bwplot(mathgain ~ mathprep_binned,
-       data = mutated_classroom6_data,
-       aspect = 2,
-       ylab = "mathgain",
-       xlab = "mathprep",
-       main = "Boxplots of math prep against math gain"
+bwplot(
+  mathgain ~ mathprep_binned,
+  data = mutated_classroom6_data,
+  aspect = 2,
+  ylab = "mathgain",
+  xlab = "mathprep",
+  main = "Boxplots of math prep against math gain"
 )
 # Conclusion: binned mathprep looks good. Extremely different variance. Mean is
 # different between low / medium and high groups; consider consolidating these
@@ -111,12 +123,13 @@ mutated_classroom6_data %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain),
             N = n())
-bwplot(mathgain ~ mathprep_binned | yearstea_binned,
-       data = mutated_classroom6_data,
-       aspect = 2,
-       ylab = "mathgain",
-       xlab = "mathprep",
-       main = "Boxplots of math prep and years taught against math gain"
+bwplot(
+  mathgain ~ mathprep_binned | yearstea_binned,
+  data = mutated_classroom6_data,
+  aspect = 2,
+  ylab = "mathgain",
+  xlab = "mathprep",
+  main = "Boxplots of math prep and years taught against math gain"
 )
 # Conclusion: This could be viable, but note how low the mean is for high
 # mathprep and high yearstea-- this is just a really small bin. There's also no
@@ -125,10 +138,12 @@ bwplot(mathgain ~ mathprep_binned | yearstea_binned,
 
 classroom6 %>%
   group_by(sex, minority) %>%
-  summarize(CorYearsTaught = cor(yearstea, mathgain),
-            CorMathPrep = cor(mathprep, mathgain),
-            CorMathKind = cor(mathkind, mathgain),
-            CorSES = cor(ses, mathgain))
+  summarize(
+    CorYearsTaught = cor(yearstea, mathgain),
+    CorMathPrep = cor(mathprep, mathgain),
+    CorMathKind = cor(mathkind, mathgain),
+    CorSES = cor(ses, mathgain)
+  )
 # Conclusion: not much, the correlation actually isn't that descriptive.
 
 plot(means ~ classid, data = means_by_class)
@@ -151,10 +166,10 @@ bwplot(
 )
 
 
-# 
+#
 # class.first8 <- classroom6[classroom6$schoolid <= 8, ]
 # par(mfrow = c(4, 2))
-# 
+#
 # for (i in 1:8)
 # {
 #   boxplot(class.first8$mathgain[class.first8$schoolid == i] ~ class.first8$classid[class.first8$schoolid == i])
@@ -162,8 +177,10 @@ bwplot(
 
 
 # Convert text-labeled bins to numeric (ordinal) values
-mutated_classroom6_data$yearstea_binned_num <- as.numeric(mutated_classroom6_data$yearstea_binned)
-mutated_classroom6_data$mathprep_binned_num <- as.numeric(mutated_classroom6_data$mathprep_binned)
+mutated_classroom6_data$yearstea_binned_num <-
+  as.numeric(mutated_classroom6_data$yearstea_binned)
+mutated_classroom6_data$mathprep_binned_num <-
+  as.numeric(mutated_classroom6_data$mathprep_binned)
 
 
 
@@ -172,6 +189,42 @@ mutated_classroom6_data$mathprep_binned_num <- as.numeric(mutated_classroom6_dat
 
 summary(mutated_classroom6_data)
 
-model1.fit <- lme(mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned, random = ~1|classid, data = mutated_classroom6_data, method="REML")
+model1.fit <-
+  lme(
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num,
+    random = ~ 1 |
+      classid,
+    data = mutated_classroom6_data,
+    method = "REML"
+  )
 summary(model1.fit)
 anova(model1.fit)
+
+
+# First Hypothesis: Does the random intercept on the class id matter?
+# Fit Model 3.1A.
+model1a.fit <-
+  gls(
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num,
+    mutated_classroom6_data
+  )
+anova(model1.fit, model1a.fit) # Test hypothesis one.
+
+# Conclusion: retain the random classid effect
+
+
+# Second hypothesis: Does the random intercept on child id matter?
+
+model1b.fit <-
+  lme(
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num,
+    random = (list(
+      classid =  ~ 1, childid =  ~ 1
+    )),
+    data = mutated_classroom6_data,
+    method = "REML"
+  )
+summary(model1b.fit)
+anova(model1.fit, model1b.fit) # Test hypothesis two.
+
+# Conclusion: child ID random intercept should not be included. Model 1 is the current choice.
