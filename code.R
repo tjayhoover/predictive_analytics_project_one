@@ -11,6 +11,9 @@ library(grid)
 
 load("classroom6.RData")
 
+
+# ---------------------- Summary Stats -----------------------------------------
+
 summary(classroom6)
 
 # a.
@@ -73,7 +76,10 @@ plot(means ~ mathprep, data = means_by_class)
 # Conclusion: lvl 2 variables have variance, form bins and use as fixed factors.
 
 
-mutated_classroom6_data = classroom6 %>%
+
+# ----------------------- Binning by yearstea and mathprep -------------------------
+
+full_df = classroom6 %>%
   mutate(
     yearstea_binned = cut(
       yearstea,
@@ -87,13 +93,25 @@ mutated_classroom6_data = classroom6 %>%
     )
   )
 
-mutated_classroom6_data %>%
+# Convert text-labeled bins to numeric (ordinal) values
+full_df$yearstea_binned_num <-
+  as.numeric(full_df$yearstea_binned)
+full_df$mathprep_binned_num <-
+  as.numeric(full_df$mathprep_binned)
+
+# Note: full_df is the full dataframe with the binned columns, both
+# ordinal (numeric) and purely qualitative text-based levels
+
+
+# ------------------- Summary stats and BW plots -------------------------
+
+full_df %>%
   group_by(yearstea_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
 bwplot(
   mathgain ~ yearstea_binned,
-  data = mutated_classroom6_data,
+  data = full_df,
   aspect = 2,
   ylab = "mathgain",
   xlab = "mathprep",
@@ -102,13 +120,15 @@ bwplot(
 # Conclusion: binned yearstea is significant. Variances are different, and there
 # are notable outliers in all groups.
 
-mutated_classroom6_data %>%
+full_df %>%
   group_by(mathprep_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain))
+
+
 bwplot(
   mathgain ~ mathprep_binned,
-  data = mutated_classroom6_data,
+  data = full_df,
   aspect = 2,
   ylab = "mathgain",
   xlab = "mathprep",
@@ -118,14 +138,14 @@ bwplot(
 # different between low / medium and high groups; consider consolidating these
 # categories together.
 
-mutated_classroom6_data %>%
+full_df %>%
   group_by(mathprep_binned, yearstea_binned) %>%
   summarize(Mean = mean(mathgain),
             SD = sd(mathgain),
             N = n())
 bwplot(
   mathgain ~ mathprep_binned | yearstea_binned,
-  data = mutated_classroom6_data,
+  data = full_df,
   aspect = 2,
   ylab = "mathgain",
   xlab = "mathprep",
@@ -166,35 +186,56 @@ bwplot(
 )
 
 
-#
-# class.first8 <- classroom6[classroom6$schoolid <= 8, ]
-# par(mfrow = c(4, 2))
-#
-# for (i in 1:8)
-# {
-#   boxplot(class.first8$mathgain[class.first8$schoolid == i] ~ class.first8$classid[class.first8$schoolid == i])
-# }
+# ----------- Mathkind vs Mathgain scatterplots by various groups ----------------
+
+# Create a scatterplot with different colors for each level of the third variable
+ggplot(classroom6, aes(x = mathgain, y = mathkind, color = classid)) +
+  geom_point() +
+  labs(x = "Mathgain", y = "Mathkind", color = "classid") +
+  theme_minimal()
 
 
-# Convert text-labeled bins to numeric (ordinal) values
-mutated_classroom6_data$yearstea_binned_num <-
-  as.numeric(mutated_classroom6_data$yearstea_binned)
-mutated_classroom6_data$mathprep_binned_num <-
-  as.numeric(mutated_classroom6_data$mathprep_binned)
+# Create a scatterplot with different colors for each level of the third variable
+ggplot(classroom6, aes(x = mathgain, y = mathkind, color = sex)) +
+  geom_point() +
+  labs(x = "Mathgain", y = "Mathkind", color = "sex") +
+  theme_minimal()
+
+# Create a scatterplot with different colors for each level of the third variable
+ggplot(full_df, aes(x = mathgain, y = mathkind, color = yearstea_binned)) +
+  geom_point() +
+  labs(x = "Mathgain", y = "Mathkind", color = "Years Taught") +
+  theme_minimal()
+
+
+# Create separate scatterplots for each level of the qualitative variable
+plots <- lapply(unique(full_df$yearstea_binned), function(level) {
+  p <-
+    ggplot(full_df[full_df$yearstea_binned == level,], aes(x = mathgain, y = mathkind)) +
+    geom_point() +
+    labs(x = "Mathgain", y = "Mathkind") +
+    ggtitle(paste("Level:", level)) +
+    theme_minimal()
+  return(p)
+})
+
+# Print the plots
+plots
 
 
 
 
-# Initial Model (Full)
+# ------------------------ Model Specification and Hypothesis Tests ---------------------
 
-summary(mutated_classroom6_data)
+
+# Initial Model (All fixed factors, random intercept by class ID
 
 model1.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
     random = ~ 1 |
       classid,
-    data = mutated_classroom6_data,
+    data = full_df,
     method = "REML"
   )
 summary(model1.fit)
@@ -205,26 +246,44 @@ anova(model1.fit)
 # Fit Model 3.1A.
 model1a.fit <-
   gls(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num,
-    mutated_classroom6_data
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    full_df
   )
 anova(model1.fit, model1a.fit) # Test hypothesis one.
 
-# Conclusion: retain the random classid effect
+# Conclusion: retain the random classid effect - it is very significant
 
 
 # Second hypothesis: Does the random intercept on child id matter?
 
 model1b.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
     random = (list(
       classid =  ~ 1, childid =  ~ 1
     )),
-    data = mutated_classroom6_data,
+    data = full_df,
     method = "REML"
   )
 summary(model1b.fit)
 anova(model1.fit, model1b.fit) # Test hypothesis two.
 
 # Conclusion: child ID random intercept should not be included. Model 1 is the current choice.
+
+
+# Third hypothesis: Does a random slope effect on mathkind based on class id matter?
+model2.fit <-
+  lme(
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    random = ~ mathkind |
+      classid,
+    data = full_df,
+    method = "REML"
+  )
+summary(model2.fit)
+anova(model2.fit)
+
+anova(model1.fit, model2.fit) # Test hypothesis three
+
+# Conclusion: yes, the random effect on the slope of mathkind based on classid is signficant.
+# Model 2 is the current best model.
