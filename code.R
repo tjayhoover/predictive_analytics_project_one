@@ -286,7 +286,52 @@ model2.fit <-
 summary(model2.fit)
 anova(model2.fit)
 
+
 anova(model1.fit, model2.fit) # Test hypothesis three
 
 # Conclusion: yes, the random effect on the slope of mathkind based on classid is signficant.
 # Model 2 is the current best model.
+
+
+# Fourth hypothesis: Is a four-way residual split by minority and sex helpful?
+model3.fit <-
+  lme(
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    random = ~ mathkind |
+      classid,
+    data = full_df,
+    method = "REML",
+    weights = varIdent(form = ~1 | minority*sex)
+  )
+summary(model3.fit)
+anova(model3.fit)
+
+
+anova(model2.fit, model3.fit) # Test hypothesis four
+
+# Fifth hypothesis: What if we split off only minority = 1 and sex = 0 from the rest of the pack in the residuals
+# (That is where I noticed the most variance)
+
+full_df$f_min_grp[full_df$minority == 1 & full_df$sex == 0] <- 1
+full_df$f_min_grp[full_df$minority == 0 | full_df$sex == 1] <- 2
+
+model3a.fit <-
+  lme(
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    random = ~ mathkind |
+      classid,
+    data = full_df,
+    method = "REML",
+    weights = varIdent(form = ~1 | f_min_grp)
+  )
+summary(model3a.fit)
+anova(model3a.fit)
+
+
+anova(model3.fit, model3a.fit) # Test hypothesis five
+
+# The test is not significant - so we select the nested model in this case
+# Model 3a with a 2-way split of the residuals between minority - 1, sex - 0 
+# and the other groups combined is the best model at this point.
+
+# TODO: Reduce the model by removing insignificant fixed effects
