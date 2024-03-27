@@ -211,7 +211,7 @@ ggplot(full_df, aes(x = mathkind, y = mathgain, color = yearstea_binned)) +
 # Create separate scatterplots for each level of the qualitative variable
 plots <- lapply(unique(full_df$yearstea_binned), function(level) {
   p <-
-    ggplot(full_df[full_df$yearstea_binned == level,], aes(x = mathkind, y = mathgain)) +
+    ggplot(full_df[full_df$yearstea_binned == level, ], aes(x = mathkind, y = mathgain)) +
     geom_point() +
     labs(x = "Mathkind", y = "Mathgain") +
     ggtitle(paste("Level:", level)) +
@@ -223,7 +223,7 @@ plots <- lapply(unique(full_df$yearstea_binned), function(level) {
 plots
 
 # Note: the color-coded scatter plots are of limited utilitity. It is hard to
-# deduce differences in the relationship between mathkind and math
+# deduce differences in the relationship between mathkind and mathgain.
 
 
 
@@ -311,7 +311,7 @@ model3.fit <-
       classid,
     data = full_df,
     method = "REML",
-    weights = varIdent(form = ~1 | minority*sex)
+    weights = varIdent(form = ~ 1 | minority * sex)
   )
 summary(model3.fit)
 anova(model3.fit)
@@ -333,7 +333,7 @@ model3a.fit <-
       classid,
     data = full_df,
     method = "REML",
-    weights = varIdent(form = ~1 | f_min_grp)
+    weights = varIdent(form = ~ 1 | f_min_grp)
   )
 summary(model3a.fit)
 anova(model3a.fit)
@@ -342,13 +342,14 @@ anova(model3a.fit)
 anova(model3.fit, model3a.fit) # Test hypothesis five
 
 # The test is not significant - so we select the nested model in this case
-# Model 3a with a 2-way split of the residuals between minority - 1, sex - 0 
+# Model 3a with a 2-way split of the residuals between minority - 1, sex - 0
 # and the other groups combined is the best model at this point.
 
 
 # Hypothesis 6: Is a further residual split by minority and sex helpful?
 
-full_df$highyt_grp[full_df$yearstea_binned == "Low" | full_df$yearstea_binned == "Medium"] <- 0
+full_df$highyt_grp[full_df$yearstea_binned == "Low" |
+                     full_df$yearstea_binned == "Medium"] <- 0
 full_df$highyt_grp[full_df$yearstea_binned == "High"] <- 1
 
 model3b.fit <-
@@ -358,7 +359,7 @@ model3b.fit <-
       classid,
     data = full_df,
     method = "REML",
-    weights = varIdent(form = ~1 | f_min_grp * highyt_grp)
+    weights = varIdent(form = ~ 1 | f_min_grp * highyt_grp)
   )
 summary(model3b.fit)
 anova(model3b.fit)
@@ -392,7 +393,7 @@ model4.ml.fit <-
       classid,
     data = full_df,
     method = "ML",
-    weights = varIdent(form = ~1 | f_min_grp)
+    weights = varIdent(form = ~ 1 | f_min_grp)
   )
 
 # Nested model (no minority fixed factor)
@@ -403,7 +404,7 @@ model4a.ml.fit <-
       classid,
     data = full_df,
     method = "ML",
-    weights = varIdent(form = ~1 | f_min_grp)
+    weights = varIdent(form = ~ 1 | f_min_grp)
   )
 
 # Test hypothesis 8
@@ -424,7 +425,7 @@ model4.reml.fit <-
       classid,
     data = full_df,
     method = "REML",
-    weights = varIdent(form = ~1 | f_min_grp)
+    weights = varIdent(form = ~ 1 | f_min_grp)
   )
 
 summary(model4.reml.fit) # AIC = 11376.02
