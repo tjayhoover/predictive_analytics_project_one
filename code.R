@@ -238,8 +238,7 @@ plots
 model1.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
-    random = ~ 1 |
-      classid,
+    random = ~ 1 | classid,
     data = full_df,
     method = "REML"
   )
@@ -252,7 +251,7 @@ anova(model1.fit)
 
 
 # Hypothesis 1: Does the random intercept on the class id matter?
-# Fit Model 3.1A.
+# Fit Model 3.1A (Note: no random effects, so need to use gls.)
 model1a.fit <-
   gls(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
@@ -268,9 +267,7 @@ anova(model1.fit, model1a.fit) # Test hypothesis one.
 model1b.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
-    random = (list(
-      classid =  ~ 1, childid =  ~ 1
-    )),
+    random = (list(classid =  ~ 1, childid =  ~ 1)),
     data = full_df,
     method = "REML"
   )
@@ -284,8 +281,7 @@ anova(model1.fit, model1b.fit) # Test hypothesis two.
 model2.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
-    random = ~ mathkind |
-      classid,
+    random = ~ mathkind | classid,
     data = full_df,
     method = "REML"
   )
@@ -295,7 +291,7 @@ anova(model2.fit)
 
 anova(model1.fit, model2.fit) # Test hypothesis three
 
-# Conclusion: yes, the random effect on the slope of mathkind based on classid is signficant.
+# Conclusion: yes, the random effect on the slope of mathkind based on classid is significant.
 # Model 2 is the current best model.
 
 
@@ -307,8 +303,7 @@ anova(model1.fit, model2.fit) # Test hypothesis three
 model3.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
-    random = ~ mathkind |
-      classid,
+    random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
     weights = varIdent(form = ~ 1 | minority * sex)
@@ -329,8 +324,7 @@ full_df$f_min_grp[full_df$minority == 0 | full_df$sex == 1] <- 2
 model3a.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
-    random = ~ mathkind |
-      classid,
+    random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
     weights = varIdent(form = ~ 1 | f_min_grp)
@@ -355,8 +349,7 @@ full_df$highyt_grp[full_df$yearstea_binned == "High"] <- 1
 model3b.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
-    random = ~ mathkind |
-      classid,
+    random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
     weights = varIdent(form = ~ 1 | f_min_grp * highyt_grp)
@@ -389,8 +382,7 @@ anova(model3a.fit)
 model4.ml.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
-    random = ~ mathkind |
-      classid,
+    random = ~ mathkind | classid,
     data = full_df,
     method = "ML",
     weights = varIdent(form = ~ 1 | f_min_grp)
@@ -400,8 +392,7 @@ model4.ml.fit <-
 model4a.ml.fit <-
   lme(
     mathgain ~ sex + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
-    random = ~ mathkind |
-      classid,
+    random = ~ mathkind | classid,
     data = full_df,
     method = "ML",
     weights = varIdent(form = ~ 1 | f_min_grp)
@@ -421,8 +412,7 @@ anova(model4.ml.fit, model4a.ml.fit)
 model4.reml.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
-    random = ~ mathkind |
-      classid,
+    random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
     weights = varIdent(form = ~ 1 | f_min_grp)
