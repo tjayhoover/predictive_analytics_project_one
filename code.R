@@ -334,4 +334,30 @@ anova(model3.fit, model3a.fit) # Test hypothesis five
 # Model 3a with a 2-way split of the residuals between minority - 1, sex - 0 
 # and the other groups combined is the best model at this point.
 
+
+
+
+# Sixth hypothesis: Is a further residual split by minority and sex helpful?
+
+full_df$highyt_grp[full_df$yearstea_binned == "Low" | full_df$yearstea_binned == "Medium"] <- 0
+full_df$highyt_grp[full_df$yearstea_binned == "High"] <- 1
+
+model3b.fit <-
+  lme(
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    random = ~ mathkind |
+      classid,
+    data = full_df,
+    method = "REML",
+    weights = varIdent(form = ~1 | f_min_grp * highyt_grp)
+  )
+summary(model3b.fit)
+anova(model3b.fit)
+
+anova(model3a.fit, model3b.fit) # Test hypothesis six
+# Results - not significant. Thus, adding the extra residual variance parameter
+# differentiating experienced teachers did not improve our model.
+# Model 3a remains the best.
+
+
 # TODO: Reduce the model by removing insignificant fixed effects
