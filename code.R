@@ -189,31 +189,31 @@ bwplot(
 # ----------- Mathkind vs Mathgain scatterplots by various groups ----------------
 
 # Create a scatterplot with different colors for each level of the third variable
-ggplot(classroom6, aes(x = mathgain, y = mathkind, color = classid)) +
+ggplot(classroom6, aes(x = mathkind, y = mathgain, color = classid)) +
   geom_point() +
-  labs(x = "Mathgain", y = "Mathkind", color = "classid") +
+  labs(x = "Mathkind", y = "Mathgain", color = "classid") +
   theme_minimal()
 
 
 # Create a scatterplot with different colors for each level of the third variable
-ggplot(classroom6, aes(x = mathgain, y = mathkind, color = sex)) +
+ggplot(classroom6, aes(x = mathkind, y = mathgain, color = sex)) +
   geom_point() +
-  labs(x = "Mathgain", y = "Mathkind", color = "sex") +
+  labs(x = "Mathkind", y = "Mathgain", color = "sex") +
   theme_minimal()
 
 # Create a scatterplot with different colors for each level of the third variable
-ggplot(full_df, aes(x = mathgain, y = mathkind, color = yearstea_binned)) +
+ggplot(full_df, aes(x = mathkind, y = mathgain, color = yearstea_binned)) +
   geom_point() +
-  labs(x = "Mathgain", y = "Mathkind", color = "Years Taught") +
+  labs(x = "Mathkind", y = "Mathgain", color = "Years Taught") +
   theme_minimal()
 
 
 # Create separate scatterplots for each level of the qualitative variable
 plots <- lapply(unique(full_df$yearstea_binned), function(level) {
   p <-
-    ggplot(full_df[full_df$yearstea_binned == level,], aes(x = mathgain, y = mathkind)) +
+    ggplot(full_df[full_df$yearstea_binned == level,], aes(x = mathkind, y = mathgain)) +
     geom_point() +
-    labs(x = "Mathgain", y = "Mathkind") +
+    labs(x = "Mathkind", y = "Mathgain") +
     ggtitle(paste("Level:", level)) +
     theme_minimal()
   return(p)
@@ -221,6 +221,9 @@ plots <- lapply(unique(full_df$yearstea_binned), function(level) {
 
 # Print the plots
 plots
+
+# Note: the color-coded scatter plots are of limited utilitity. It is hard to
+# deduce differences in the relationship between mathkind and math
 
 
 
