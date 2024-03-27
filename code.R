@@ -222,6 +222,15 @@ plots <- lapply(unique(full_df$yearstea_binned), function(level) {
 # Print the plots
 plots
 
+
+# Create scatterplots with best fit lines
+ggplot(full_df, aes(x = mathkind, y = mathgain, color = classid)) +
+  geom_point() +  # Add points
+  geom_smooth(method = "lm", se = FALSE) +  # Add best fit lines
+  labs(x = "Mathkind", y = "Mathgain", title = "Scatterplot with Best Fit Lines") +
+  theme_minimal() + 
+  facet_wrap(~ classid, scales = "free")
+
 # Note: the color-coded scatter plots are of limited utilitity. It is hard to
 # deduce differences in the relationship between mathkind and mathgain.
 
@@ -340,7 +349,8 @@ anova(model3.fit, model3a.fit) # Test hypothesis five
 # and the other groups combined is the best model at this point.
 
 
-# Hypothesis 6: Is a further residual split by minority and sex helpful?
+# Hypothesis 6: Is a further residual split by years taught high vs med and low
+# useful?
 
 full_df$highyt_grp[full_df$yearstea_binned == "Low" |
                      full_df$yearstea_binned == "Medium"] <- 0
