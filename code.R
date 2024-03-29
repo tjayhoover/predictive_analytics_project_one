@@ -75,16 +75,21 @@ plot(means ~ yearstea, data = means_by_class)
 plot(means ~ mathprep, data = means_by_class)
 # Conclusion: lvl 2 variables have variance, form bins and use as fixed factors.
 
+# What should the bins be?
 histogram(~ mathprep, data = classroom6)
-# TODO:
+# Conclusion: 0-2.5 mathprep, 2.5-3 mathprep, 3 and higher mathprep.
+
+histogram(~ yearstea, data = classroom6)
+# Conclusion: even thirds is pretty good.
 
 # ----------------------- Binning by yearstea and mathprep -------------------------
 
-full_df = classroom6[classroom6$childid != 41,] %>%
+full_df = classroom6 %>%
+#[classroom6$childid != 41,] %>%
   mutate(
     yearstea_binned = cut(
       yearstea,
-      breaks = 3,
+      breaks = 3, # even thirds
       labels = c("Low", "Medium", "High")
     ),
     mathprep_binned = cut(
@@ -459,15 +464,23 @@ anova(model4.reml.fit)
 full_df_with_residuals <- data.frame(full_df, res = resid(model4.reml.fit))
 histogram(~ res | factor(f_min_grp),
           data = full_df_with_residuals,
-          layout=c(1,2), aspect = 0.5, breaks = 10) 
+          layout=c(1,2), aspect = 0.5, breaks = 10)
 # Conclusion: normality assumption visually met.
+
+# Bonus points: Shapiro-Wilk test for normality.
+shapiro.test(full_df_with_residuals$res)
+# These residuals do not appear to be normally distributed according to the
+# Shapiro-Wilks test, but this is likely due to the large sample size. Suppose
+# we were to select a small group of residuals:
+shapiro.test(full_df_with_residuals$res[sample(nrow(full_df_with_residuals), 30)])
+# Our residuals are acceptably normal.
 
 qqnorm(model4.reml.fit, ~ resid(.) | factor(f_min_grp),
        layout=c(1,2), aspect = 1)
 # Conclusion: Q-Q plots are linear enough. Evidence for an outlier in group 1.
 
 # Test 2: constant variance of the residuals, a lack of which would show
-# heteroskedasicity.
+# heteroskedasticity.
 plot(model4.reml.fit, resid(.) ~ fitted(.) | factor(f_min_grp), layout=c(2,1), aspect=1)
 # Conclusion: relatively constant variance within each group, but there are
 # notable leverage points and notable outliers. Studentized conditional residuals
@@ -478,6 +491,4 @@ plot(model4.reml.fit, resid(.) ~ fitted(.) | factor(f_min_grp), layout=c(2,1), a
 bwplot(resid(model4.reml.fit, type = "pearson")  ~ factor(f_min_grp), data = full_df)
 # Conclusion: equal variance between groups, with a notable negative outlier
 # in group 1 (minority 1, sex 0) and a notable positive outlier in group 2.
-
-infl = influence(model4.reml.fit)
 
