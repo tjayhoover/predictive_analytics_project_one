@@ -75,7 +75,8 @@ plot(means ~ yearstea, data = means_by_class)
 plot(means ~ mathprep, data = means_by_class)
 # Conclusion: lvl 2 variables have variance, form bins and use as fixed factors.
 
-
+histogram(~ mathprep, data = classroom6)
+# TODO:
 
 # ----------------------- Binning by yearstea and mathprep -------------------------
 
@@ -88,7 +89,7 @@ full_df = classroom6[classroom6$childid != 41,] %>%
     ),
     mathprep_binned = cut(
       mathprep,
-      breaks = 3,
+      breaks = c(0, 2.5, 3, 5),
       labels = c("Low", "Medium", "High")
     )
   )
@@ -105,6 +106,9 @@ full_df$mathprep_binned_num[full_df$mathprep_binned == "Low"] <- 1
 full_df$mathprep_binned_num[full_df$mathprep_binned == "Medium"] <- 2
 full_df$mathprep_binned_num[full_df$mathprep_binned == "High"] <- 3
 
+full_df$mathprep_binned_num = as.factor(full_df$mathprep_binned_num)
+full_df$yearstea_binned_num = as.factor(full_df$yearstea_binned_num)
+
 # Note: full_df is the full dataframe with the binned columns, both
 # ordinal (numeric) and purely qualitative text-based levels
 
@@ -120,7 +124,7 @@ bwplot(
   data = full_df,
   aspect = 2,
   ylab = "mathgain",
-  xlab = "mathprep",
+  xlab = "yearstea",
   main = "Boxplots of years taught against math gain"
 )
 # Conclusion: binned yearstea is significant. Variances are different, and there
@@ -476,3 +480,4 @@ bwplot(resid(model4.reml.fit, type = "pearson")  ~ factor(f_min_grp), data = ful
 # in group 1 (minority 1, sex 0) and a notable positive outlier in group 2.
 
 infl = influence(model4.reml.fit)
+
