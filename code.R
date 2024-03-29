@@ -94,10 +94,16 @@ full_df = classroom6[classroom6$childid != 41,] %>%
   )
 
 # Convert text-labeled bins to numeric (ordinal) values
-full_df$yearstea_binned_num <-
-  as.numeric(full_df$yearstea_binned)
-full_df$mathprep_binned_num <-
-  as.numeric(full_df$mathprep_binned)
+full_df$yearstea_binned_num[full_df$yearstea_binned == "Low"] <- 1
+full_df$yearstea_binned_num[full_df$yearstea_binned == "Medium"] <- 2
+full_df$yearstea_binned_num[full_df$yearstea_binned == "High"] <- 3
+# full_df$yearstea_binned_num <-
+#   as.numeric(full_df$yearstea_binned)
+# full_df$mathprep_binned_num <-
+#   as.numeric(full_df$mathprep_binned)
+full_df$mathprep_binned_num[full_df$mathprep_binned == "Low"] <- 1
+full_df$mathprep_binned_num[full_df$mathprep_binned == "Medium"] <- 2
+full_df$mathprep_binned_num[full_df$mathprep_binned == "High"] <- 3
 
 # Note: full_df is the full dataframe with the binned columns, both
 # ordinal (numeric) and purely qualitative text-based levels
@@ -265,27 +271,13 @@ model1a.fit <-
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
     full_df
   )
+summary(model1a.fit)
 anova(model1.fit, model1a.fit) # Test hypothesis one.
 
 # Conclusion: retain the random classid effect - it is very significant
 
 
-# Hypothesis 2: Does the random intercept on child id matter?
-
-model1b.fit <-
-  lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
-    random = (list(classid =  ~ 1, childid =  ~ 1)),
-    data = full_df,
-    method = "REML"
-  )
-summary(model1b.fit)
-anova(model1.fit, model1b.fit) # Test hypothesis two.
-
-# Conclusion: child ID random intercept should not be included. Model 1 is the current choice.
-
-
-# Hypothesis 3: Does a random slope effect on mathkind based on class id matter?
+# Hypothesis 2: Does a random slope effect on mathkind based on class id matter?
 model2.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
@@ -307,7 +299,7 @@ anova(model1.fit, model2.fit) # Test hypothesis three
 # ----------- Step 3: Select a covariance structure for the residuals ----------
 
 
-# Hypothesis 4: Is a four-way residual split by minority and sex helpful?
+# Hypothesis 3: Is a four-way residual split by minority and sex helpful?
 model3.fit <-
   lme(
     mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
@@ -323,7 +315,7 @@ anova(model3.fit)
 anova(model2.fit, model3.fit) # Test hypothesis four
 
 
-# Hypothesis 5: What if we split off only minority = 1 and sex = 0 from the rest of the pack in the residuals
+# Hypothesis 4: What if we split off only minority = 1 and sex = 0 from the rest of the pack in the residuals
 # (That is where I noticed the most variance)
 
 full_df$f_min_grp[full_df$minority == 1 & full_df$sex == 0] <- 1
@@ -348,7 +340,7 @@ anova(model3.fit, model3a.fit) # Test hypothesis five
 # and the other groups combined is the best model at this point.
 
 
-# Hypothesis 6: Is a further residual split by years taught high vs med and low
+# Hypothesis 5: Is a further residual split by years taught high vs med and low
 # useful?
 
 full_df$highyt_grp[full_df$yearstea_binned == "Low" |
@@ -376,7 +368,7 @@ anova(model3a.fit, model3b.fit) # Test hypothesis six
 # ------ Step 4: Reduce the model by removing nonsignificant fixed effects -----
 
 
-# Hypothesis 7: Is the minority:mathkind interaction term significant?
+# Hypothesis 6: Is the minority:mathkind interaction term significant?
 # Test hypothesis 7 (Type I test)
 anova(model3a.fit)
 
@@ -384,7 +376,7 @@ anova(model3a.fit)
 # insignificant. So we drop it.
 
 
-# Hypothesis 8: Is minority as a fixed factor significant?
+# Hypothesis 7: Is sex as a fixed factor significant?
 # We will use a LRT and ML estimation.
 
 # Reference model (notice we already dropped the minority:mathkind interaction.)
@@ -396,21 +388,44 @@ model4.ml.fit <-
     method = "ML",
     weights = varIdent(form = ~ 1 | f_min_grp)
   )
+summary(model4.ml.fit)
 
-# Nested model (no minority fixed factor)
+# Nested model (no sex fixed factor)
 model4a.ml.fit <-
   lme(
-    mathgain ~ sex + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
+    mathgain ~ minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
     random = ~ mathkind | classid,
     data = full_df,
     method = "ML",
     weights = varIdent(form = ~ 1 | f_min_grp)
   )
+summary(model4a.ml.fit)
 
-# Test hypothesis 8
+# Test hypothesis 7
 anova(model4.ml.fit, model4a.ml.fit)
 
-# The test is significant, so we retain the sex fixed effect
+# The test is nonsignificant, so we drop the sex fixed effects
+
+
+# Hypothesis 8: Is mathprep_binned_num as a fixed factor significant?
+# We will use a LRT and ML estimation.
+
+# Nested model (No math_prepped_bin_num fixed effect).
+model4b.ml.fit <-
+  lme(
+    mathgain ~ minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num,
+    random = ~ mathkind | classid,
+    data = full_df,
+    method = "ML",
+    weights = varIdent(form = ~ 1 | f_min_grp)
+  )
+summary(model4b.ml.fit)
+
+
+# Test hypothesis 8
+anova(model4a.ml.fit, model4b.ml.fit)
+
+# The test is nonsignificant, so we drop the sex fixed effects
 
 
 
@@ -420,7 +435,7 @@ anova(model4.ml.fit, model4a.ml.fit)
 # Is this the final model?
 model4.reml.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
+    mathgain ~ minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num,
     random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
