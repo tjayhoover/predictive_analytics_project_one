@@ -99,26 +99,12 @@ full_df = classroom6 %>%
     )
   )
 
-# Convert text-labeled bins to numeric (ordinal) values
-full_df$yearstea_binned_num[full_df$yearstea_binned == "Low"] <- 1
-full_df$yearstea_binned_num[full_df$yearstea_binned == "Medium"] <- 2
-full_df$yearstea_binned_num[full_df$yearstea_binned == "High"] <- 3
-# full_df$yearstea_binned_num <-
-#   as.numeric(full_df$yearstea_binned)
-# full_df$mathprep_binned_num <-
-#   as.numeric(full_df$mathprep_binned)
-full_df$mathprep_binned_num[full_df$mathprep_binned == "Low"] <- 1
-full_df$mathprep_binned_num[full_df$mathprep_binned == "Medium"] <- 2
-full_df$mathprep_binned_num[full_df$mathprep_binned == "High"] <- 3
-
-full_df$mathprep_binned_num = as.factor(full_df$mathprep_binned_num)
-full_df$yearstea_binned_num = as.factor(full_df$yearstea_binned_num)
-
-# Note: full_df is the full dataframe with the binned columns, both
-# ordinal (numeric) and purely qualitative text-based levels
 
 
-# ------------------- Summary stats and BW plots -------------------------
+# Note: full_df is the full dataframe with the binned columns
+
+
+# ------------------------- Summary stats and BW plots -------------------------
 
 full_df %>%
   group_by(yearstea_binned) %>%
@@ -260,7 +246,7 @@ ggplot(full_df, aes(x = mathkind, y = mathgain, color = classid)) +
 
 model1.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned + mathkind:minority + mathprep_binned,
     random = ~ 1 | classid,
     data = full_df,
     method = "REML"
@@ -277,7 +263,7 @@ anova(model1.fit)
 # Fit Model 3.1A (Note: no random effects, so need to use gls.)
 model1a.fit <-
   gls(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned + mathkind:minority + mathprep_binned,
     full_df
   )
 summary(model1a.fit)
@@ -289,7 +275,7 @@ anova(model1.fit, model1a.fit) # Test hypothesis one.
 # Hypothesis 2: Does a random slope effect on mathkind based on class id matter?
 model2.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned + mathkind:minority + mathprep_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "REML"
@@ -311,7 +297,7 @@ anova(model1.fit, model2.fit) # Test hypothesis three
 # Hypothesis 3: Is a four-way residual split by minority and sex helpful?
 model3.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned + mathkind:minority + mathprep_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
@@ -332,7 +318,7 @@ full_df$f_min_grp[full_df$minority == 0 | full_df$sex == 1] <- 2
 
 model3a.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned + mathkind:minority + mathprep_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
@@ -358,7 +344,7 @@ full_df$highyt_grp[full_df$yearstea_binned == "High"] <- 1
 
 model3b.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathkind:minority + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned + mathkind:minority + mathprep_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
@@ -391,7 +377,7 @@ anova(model3a.fit)
 # Reference model (notice we already dropped the minority:mathkind interaction.)
 model4.ml.fit <-
   lme(
-    mathgain ~ sex + minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
+    mathgain ~ sex + minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "ML",
@@ -402,7 +388,7 @@ summary(model4.ml.fit)
 # Nested model (no sex fixed factor)
 model4a.ml.fit <-
   lme(
-    mathgain ~ minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num + mathprep_binned_num,
+    mathgain ~ minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "ML",
@@ -416,13 +402,14 @@ anova(model4.ml.fit, model4a.ml.fit)
 # The test is nonsignificant, so we drop the sex fixed effects
 
 
-# Hypothesis 8: Is mathprep_binned_num as a fixed factor significant?
+# Hypothesis 8: Is methprep as a fixed factor significant?
 # We will use a LRT and ML estimation.
 
-# Nested model (No math_prepped_bin_num fixed effect).
+
+# Reference model (Inlcudes mathprep).
 model4b.ml.fit <-
   lme(
-    mathgain ~ minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num,
+    mathgain ~ minority + mathkind + ses + mathprep + yearstea_binned + mathprep_binned:yearstea_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "ML",
@@ -430,11 +417,22 @@ model4b.ml.fit <-
   )
 summary(model4b.ml.fit)
 
+# Nested model (No mathprep effect).
+model4c.ml.fit <-
+  lme(
+    mathgain ~ minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned,
+    random = ~ mathkind | classid,
+    data = full_df,
+    method = "ML",
+    weights = varIdent(form = ~ 1 | f_min_grp)
+  )
+summary(model4c.ml.fit)
+
 
 # Test hypothesis 8
-anova(model4a.ml.fit, model4b.ml.fit)
+anova(model4b.ml.fit, model4c.ml.fit)
 
-# The test is nonsignificant, so we drop the sex fixed effects
+# The test is nonsignificant, so we add the mathprep effect
 
 
 
@@ -444,7 +442,7 @@ anova(model4a.ml.fit, model4b.ml.fit)
 # Is this the final model?
 model4.reml.fit <-
   lme(
-    mathgain ~ minority + mathkind + ses + yearstea_binned_num + mathprep_binned_num:yearstea_binned_num,
+    mathgain ~ minority + mathkind + ses + yearstea_binned + mathprep_binned:yearstea_binned,
     random = ~ mathkind | classid,
     data = full_df,
     method = "REML",
@@ -452,8 +450,10 @@ model4.reml.fit <-
   )
 
  #-5675.008
-summary(model4.reml.fit) # AIC = 11376.02
+summary(model4.reml.fit) # AIC = 11344.91
 anova(model4.reml.fit)
+
+ranef(model4.reml.fit)
 
 # ------------------------------- DIAGNOSTICS ----------------------------------
 
