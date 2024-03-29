@@ -79,7 +79,7 @@ plot(means ~ mathprep, data = means_by_class)
 
 # ----------------------- Binning by yearstea and mathprep -------------------------
 
-full_df = classroom6 %>%
+full_df = classroom6[classroom6$childid != 41,] %>%
   mutate(
     yearstea_binned = cut(
       yearstea,
@@ -170,7 +170,7 @@ plot(means ~ classid, data = means_by_class)
 # Conclusion: class means vary by class ID, include classid as a random factor.
 # First evidence of an outlier too-- class 37.
 
-plot(mathgain ~ childid, data = classroom6)
+plot(mathgain ~ childid, data = full_df)
 # Conclusion: nothing much here, but a good sign of constant variance.
 
 # Box and whisker plots
@@ -201,7 +201,6 @@ ggplot(classroom6, aes(x = mathkind, y = mathgain, color = sex)) +
   labs(x = "Mathkind", y = "Mathgain", color = "sex") +
   theme_minimal()
 
-# Create a scatterplot with different colors for each level of the third variable
 ggplot(full_df, aes(x = mathkind, y = mathgain, color = yearstea_binned)) +
   geom_point() +
   labs(x = "Mathkind", y = "Mathgain", color = "Years Taught") +
@@ -428,5 +427,37 @@ model4.reml.fit <-
     weights = varIdent(form = ~ 1 | f_min_grp)
   )
 
+ #-5675.008
 summary(model4.reml.fit) # AIC = 11376.02
 anova(model4.reml.fit)
+
+# ------------------------------- DIAGNOSTICS ----------------------------------
+
+# Test 1: normality of residuals.
+# Test with a histogram of the residuals and a Q-Q plot.
+# Our residual matrix is split by a 2-group treatment classification, so we will
+# have 2 of each.
+full_df_with_residuals <- data.frame(full_df, res = resid(model4.reml.fit))
+histogram(~ res | factor(f_min_grp),
+          data = full_df_with_residuals,
+          layout=c(1,2), aspect = 0.5, breaks = 10) 
+# Conclusion: normality assumption visually met.
+
+qqnorm(model4.reml.fit, ~ resid(.) | factor(f_min_grp),
+       layout=c(1,2), aspect = 1)
+# Conclusion: Q-Q plots are linear enough. Evidence for an outlier in group 1.
+
+# Test 2: constant variance of the residuals, a lack of which would show
+# heteroskedasicity.
+plot(model4.reml.fit, resid(.) ~ fitted(.) | factor(f_min_grp), layout=c(2,1), aspect=1)
+# Conclusion: relatively constant variance within each group, but there are
+# notable leverage points and notable outliers. Studentized conditional residuals
+# will give us more information on these.
+
+# Test 3: equal variance between groups, tested with studentized conditional
+# residuals.
+bwplot(resid(model4.reml.fit, type = "pearson")  ~ factor(f_min_grp), data = full_df)
+# Conclusion: equal variance between groups, with a notable negative outlier
+# in group 1 (minority 1, sex 0) and a notable positive outlier in group 2.
+
+infl = influence(model4.reml.fit)
